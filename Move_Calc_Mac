@@ -1,0 +1,81 @@
+#!/usr/bin/env python3
+
+from itertools import product
+from functools import lru_cache
+from collections import deque
+
+moves = {
+    "Light hit": -3,
+    "Medium hit": -6,
+    "Hard hit": -9,
+    "Draw": -15,
+    "Punch": 2,
+    "Bend": 7,
+    "Upset": 13,
+    "Shrink": 16,
+}
+
+print("Available moves and their modifiers:")
+for move, value in moves.items():
+    print(f"{move}: {value}")
+print("Make sure to enter the pattern as presented in the anvil from right to left.\n")
+
+def find_best_combo_bfs(target):
+    queue = deque([(0, [])])
+    visited = set([0])
+
+    while queue:
+        current_value, path = queue.popleft()
+
+        if current_value == target:
+            return path
+
+        for move, value in moves.items():
+            next_value = current_value + value
+            if next_value not in visited:
+                visited.add(next_value)
+                queue.append((next_value, path + [move]))
+
+    return None
+
+moves_lower = {move.lower(): move for move in moves}
+
+goal = int(input("Enter your target value: "))
+
+# First, get the final moves from user
+while True:
+    try:
+        final_count = int(input("How many final moves (2 or 3)?: "))
+        if final_count in [2, 3]:
+            break
+        else:
+            print("Please enter 2 or 3.")
+    except ValueError:
+        print("Invalid input. Enter a number.")
+
+final_moves = []
+for i in range(final_count):
+    while True:
+        move_input = input(f"Enter final move {i + 1}: ").strip().lower()
+        if move_input in moves_lower:
+            final_moves.append(moves_lower[move_input])
+            break
+        else:
+            print("Invalid move. Choose from the list above.")
+
+# Calculate total modifier value of final moves
+final_moves_value = sum(moves[move] for move in final_moves)
+
+# Adjust the target by subtracting final moves' total
+adjusted_target = goal - final_moves_value
+
+# Find combo to get to adjusted target
+initial_combo = find_best_combo_bfs(adjusted_target)
+
+if initial_combo is None:
+    print("No valid combination of moves found to reach the adjusted target (goal minus final moves).")
+else:
+    # Reverse initial combo and append final moves
+    full_combo = list(reversed(initial_combo)) + final_moves
+    print("\nCombination of moves (right to left):")
+    print(" > ".join(full_combo))
